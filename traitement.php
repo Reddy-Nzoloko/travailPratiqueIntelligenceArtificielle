@@ -1,34 +1,61 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $intensite = $_POST['intensite'] ?? '';
-    $symptomes = $_POST['symptomes'] ?? [];
+// On initialise les variables pour éviter les erreurs d'affichage si le formulaire n'est pas soumis
+$maladie = "";
+$urgence = "";
 
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $intensite = $_POST['intensite'] ?? 'douleur_moderee';
+    $symptomes = $_POST['symptomes'] ?? [];
+    if (!empty($intensite)) {
+    $faits .= ", assert(symptome($intensite))";
+}
+if (!empty($zone)) {
+    $faits .= ", assert(symptome($zone))";
+}
+    
     // Nettoyage et préparation des faits
-    // On commence par appeler effacer_symptomes avant d'ajouter les nouveaux
+    // On commence par appeler effacer_symptomes (défini dans ton .pl)
     $faits = "effacer_symptomes";
     $faits .= ", assert(symptome($intensite))";
     
+    // Ajout des symptômes cochés
     foreach ($symptomes as $s) {
-        // Sécurité : on nettoie la chaîne pour éviter l'injection de code Prolog
-        $s = preg_replace('/[^a-z0-9_]/', '', $s);
-        $faits .= ", assert(symptome($s))";
+        $s_clean = preg_replace('/[^a-z0-9_]/', '', $s);
+        $faits .= ", assert(symptome($s_clean))";
     }
 
-    // LA COMMANDE (Note l'ordre : 1. Nettoyer, 2. Ajouter, 3. Diagnostiquer)
-    // Sur Windows, si ça échoue, remplace 'swipl' par le chemin complet : 
-    // "C:/Program Files/swipl/bin/swipl.exe"
+    // Gestion du champ de texte libre (NLP simplifié)
+    $autre = isset($_POST['autre_symptome']) ? strtolower(trim($_POST['autre_symptome'])) : "";
+    if (!empty($autre)) {
+        // Liste des mots-clés que ton Prolog connaît
+        $mots_cles = ['engourdissement', 'froid', 'fievre', 'bleu', 'craquement', 'blocage_articulaire', 'raideur_matinale'];
+        foreach ($mots_cles as $mot) {
+            if (strpos($autre, $mot) !== false) {
+                $faits .= ", assert(symptome($mot))";
+            }
+        }
+    }
+
+    // Exécution de la commande
+    // Note : On utilise des guillemets doubles pour la commande et simples pour le format Prolog
     $commande = "swipl -s diagnostic.pl -g \"$faits, diagnostic(M, U), format('~w|~w', [M, U]), halt.\" 2>&1";
     
     $output = shell_exec($commande);
 
+    // Analyse du résultat
     if ($output && strpos($output, '|') !== false) {
-        // On récupère uniquement la dernière ligne au cas où Prolog affiche des warnings
+        // Nettoyage de l'output pour ne garder que la ligne de résultat
         $lines = explode("\n", trim($output));
-        $lastLine = end($lines);
-        list($maladie, $urgence) = explode('|', $lastLine);
+        $lastLine = trim(end($lines)); 
+        
+        if (strpos($lastLine, '|') !== false) {
+            list($mal_raw, $urg_raw) = explode('|', $lastLine);
+            $maladie = ucfirst(str_replace('_', ' ', $mal_raw));
+            $urgence = $urg_raw;
+        }
     } else {
-        $maladie = "Inconnu";
-        $urgence = "Symptômes insuffisants ou erreur de communication avec le moteur Prolog ($output).";
+        $maladie = "Indéterminée";
+        $urgence = "Symptômes insuffisants pour un diagnostic automatique. Une consultation est recommandée.";
     }
 }
 ?>
