@@ -1,33 +1,37 @@
 <?php
-// On initialise les variables pour éviter les erreurs d'affichage si le formulaire n'est pas soumis
+// On initialise les variables pour l'affichage
 $maladie = "";
 $urgence = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $intensite = $_POST['intensite'] ?? 'douleur_moderee';
+    // 1. Récupération des données du formulaire
+    $intensite = $_POST['intensite'] ?? '';
+    $zone = $_POST['zone'] ?? '';
     $symptomes = $_POST['symptomes'] ?? [];
-    if (!empty($intensite)) {
-    $faits .= ", assert(symptome($intensite))";
-}
-if (!empty($zone)) {
-    $faits .= ", assert(symptome($zone))";
-}
-    
-    // Nettoyage et préparation des faits
-    // On commence par appeler effacer_symptomes (défini dans ton .pl)
+    $autre = isset($_POST['autre_symptome']) ? strtolower(trim($_POST['autre_symptome'])) : "";
+
+    // 2. Initialisation de la variable $faits (CORRECTION DE L'ERREUR)
+    // On commence toujours par nettoyer la base Prolog
     $faits = "effacer_symptomes";
-    $faits .= ", assert(symptome($intensite))";
+
+    // 3. Ajout de l'intensité (si non vide)
+    if (!empty($intensite)) {
+        $faits .= ", assert(symptome($intensite))";
+    }
+
+    // 4. Ajout de la zone (si non vide)
+    if (!empty($zone)) {
+        $faits .= ", assert(symptome($zone))";
+    }
     
-    // Ajout des symptômes cochés
+    // 5. Ajout des symptômes cochés (checkboxes)
     foreach ($symptomes as $s) {
         $s_clean = preg_replace('/[^a-z0-9_]/', '', $s);
         $faits .= ", assert(symptome($s_clean))";
     }
 
-    // Gestion du champ de texte libre (NLP simplifié)
-    $autre = isset($_POST['autre_symptome']) ? strtolower(trim($_POST['autre_symptome'])) : "";
+    // 6. Analyse du texte libre (NLP simplifié)
     if (!empty($autre)) {
-        // Liste des mots-clés que ton Prolog connaît
         $mots_cles = ['engourdissement', 'froid', 'fievre', 'bleu', 'craquement', 'blocage_articulaire', 'raideur_matinale'];
         foreach ($mots_cles as $mot) {
             if (strpos($autre, $mot) !== false) {
@@ -36,15 +40,12 @@ if (!empty($zone)) {
         }
     }
 
-    // Exécution de la commande
-    // Note : On utilise des guillemets doubles pour la commande et simples pour le format Prolog
+    // 7. Exécution de la commande SWI-Prolog
     $commande = "swipl -s diagnostic.pl -g \"$faits, diagnostic(M, U), format('~w|~w', [M, U]), halt.\" 2>&1";
-    
     $output = shell_exec($commande);
 
-    // Analyse du résultat
+    // 8. Analyse du résultat envoyé par Prolog
     if ($output && strpos($output, '|') !== false) {
-        // Nettoyage de l'output pour ne garder que la ligne de résultat
         $lines = explode("\n", trim($output));
         $lastLine = trim(end($lines)); 
         
@@ -59,12 +60,12 @@ if (!empty($zone)) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Résultat SEADO</title>
+    <link rel="icon" href="Logo.jpeg" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
