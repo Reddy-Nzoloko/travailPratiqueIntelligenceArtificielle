@@ -20,6 +20,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                    <input type="text" name="autre_symptome" placeholder="Ex: engourdissement, froid, bleu..." class="w-full bg-slate-700 border-slate-600 rounded-lg p-2">
                     <label class="block text-sm font-medium mb-2 text-blue-400">Zone Douloureuse</label>
                     <select name="zone" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="genou">Genou</option>
