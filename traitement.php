@@ -1,4 +1,7 @@
 <?php
+// Lancement de session et connexion à la base de données
+session_start();
+require 'db.php';
 // On initialise les variables pour l'affichage
 $maladie = "";
 $urgence = "";
@@ -58,6 +61,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $maladie = "Indéterminée";
         $urgence = "Symptômes insuffisants pour un diagnostic automatique. Une consultation est recommandée.";
     }
+    if (isset($_SESSION['user_id']) && !empty($maladie) && $maladie != "Indéterminée") {
+    $user_id = $_SESSION['user_id'];
+    $symptomes_str = implode(", ", $symptomes); // Convertit le tableau en texte
+    if(!empty($autre)) $symptomes_str .= " | " . $autre;
+
+    $stmt = $pdo->prepare("INSERT INTO diagnostic (dates, maladies, syntomes_cite, user_id) VALUES (NOW(), ?, ?, ?)");
+    $stmt->execute([$maladie, $symptomes_str, $user_id]);
+}
 }
 ?>
 <!DOCTYPE html>
