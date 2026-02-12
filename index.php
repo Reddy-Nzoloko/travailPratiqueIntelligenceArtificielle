@@ -10,6 +10,26 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-6">
 
+<!--  Code pour le bouton -->
+  <div class="fixed top-0 left-0 w-full p-4 flex justify-end items-center z-50">
+    <?php session_start(); ?>
+    <?php if(isset($_SESSION['user_nom'])): ?>
+        <div class="flex items-center space-x-4 bg-slate-800/80 backdrop-blur-md px-4 py-2 rounded-full border border-slate-700 shadow-lg">
+            <span class="text-sm font-medium text-blue-400">
+                <i class="fa-solid fa-user-check mr-2"></i> <?php echo $_SESSION['user_nom']; ?>
+            </span>
+            <a href="historique.php" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg transition">
+                Mon Historique
+            </a>
+            <a href="logout.php" class="text-xs text-red-400 hover:text-red-300 font-bold">Quitter</a>
+        </div>
+    <?php else: ?>
+        <a href="login.php" class="group flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-blue-900/40 transition-all transform hover:scale-105 active:scale-95">
+            <i class="fa-solid fa-right-to-bracket group-hover:translate-x-1 transition-transform"></i>
+            <span>Espace Patient</span>
+        </a>
+    <?php endif; ?>
+</div>
     <div class="max-w-2xl w-full bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 overflow-hidden">
         
         <div class="bg-gradient-to-r from-blue-700 to-blue-500 p-8 text-center relative">
